@@ -1,0 +1,45 @@
+#First three lines are:
+#clause separators
+#sentence terminators
+#abbreviation terminator
+#To skip any use NONE.
+,;:
+.?
+.
+# This file contains Latin abbreviations ending with period found in texts and grammatically unlikely to appear at sentence end.
+# For now, praenomina.
+# Masculine:
+L. 
+Agr. 
+Ap. 
+A. 
+K. 
+D. 
+F. 
+C. 
+Cn. 
+Mam. 
+M'. 
+M. 
+N. 
+Oct. 
+Opet. 
+Post. 
+Pro. 
+P. 
+Q. 
+Sert. 
+Ser. 
+Sex. 
+S. 
+St.  
+Ti. 
+T. 
+V. 
+Vol. 
+Vop. 
+#
+# Feminine (where different/unique):
+Mai. 
+Min. 
+Seq. 

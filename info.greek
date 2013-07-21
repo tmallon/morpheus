@@ -1,0 +1,8 @@
+#First three lines are:
+#clause separators
+#sentence terminators
+#abbreviation terminator
+#To skip any use NONE.
+,:
+.;
+NONE
