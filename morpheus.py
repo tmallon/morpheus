@@ -402,8 +402,8 @@ for w in ws:
                 print("Error contacting Perseus: {0}".format(err))
                 log(w, file3, 'Run stopped on error ' + format(err))
                 break
-            except:
-                print("Uncategorized error: {0}".format(err))
+            except Exception as err:
+                print("Uncategorized error contacting Perseus: {0}".format(err))
                 log(w, file3, 'Run stopped on error ' + format(err))
                 break
         
