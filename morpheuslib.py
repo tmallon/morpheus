@@ -118,7 +118,7 @@ class WordStream:
                     
                 else:
                     raise StopIteration
-            elif c == ' ':
+            elif c.isspace():
                 if self.bct > 0:
                     return self.conv_acc()
                 else:
