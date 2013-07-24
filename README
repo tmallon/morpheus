@@ -1,52 +1,66 @@
 morpheus and morpheuslib README
 
 Version:
-        1.0 dated
+        0.5 dated 24 July 2013
+
+Status:
+        Still in testing. Produces correct output, but produces rather verbose
+        output.
 
 Programmer/maintainer:
         Timothy Mallon
         Bug reports, complaints, requests to mnstger@gmail.com.
 
 Purposes:
-	Fetch morphological analyses of Greek and Latin words from Perseus Morpheus service for quick reference;
-        Assemble clauses for a Prolog knoledge base and/or JSON records for use in a Mongo database.
+	Fetch morphological analyses of Greek and Latin words from Perseus 
+        Morpheus service for quick reference; assemble clauses for a Prolog
+        knowledge base and/or JSON records for use in a Mongo database.
 
 Background re Perseus:
-	Perseus is an website run by Tufts University (http://www.perseus.tufts.edu) which offers texts and text-related services.
-        One of those services is Morpheus, which takes a Greek or Latin word as input, and returns morphological analyses, in-
-        cluding the lemma (i.e. dictionary headword), part of speech, and other morphological features. The features separate into  
-        a core set, common to all analyses; and features specific to a part of speech. The core features are: form (the word submitted), 
-        lemma (headword or word listed in a dictionary or lexicon), expandedForm (usually = form, but may include a suffixed word), pos 
-        (part of speech - noun, verb, part(iciple), adj(ective), conj(unction), exclam(ation). adv(erb)), lang ('greek' or 'la'), dialect
-        (mostly Greek, e.g. 'doric'), feature (something not fitting into the preceding). As an example of non-core features, a noun will
-        have case, gender and number.
+	Perseus is an website run by Tufts University 
+        (http://www.perseus.tufts.edu) which offers texts and text-related 
+        services. One of those services is Morpheus, which takes a Greek or 
+        Latin word as input, and returns morphological analyses in the form of
+        XML documents see below for an example). The analyses include:
+        lemma (i.e. dictionary headword), part of speech, and other 
+        morphological features. The features separate into a core set, common to
+        all analyses; and features specific to a part of speech. The core 
+        features are: form (the word submitted), lemma (headword or word listed 
+        in a dictionary or lexicon and to which the form belongs); 
+        expandedForm (usually = form, but may include a suffixed word); pos 
+        (part of speech - noun, verb, part(iciple), adj(ective), conj(unction), 
+        exclam(ation). adv(erb)); lang ('greek' or 'la'); dialect (especially 
+        Greek, e.g. 'doric'); feature (something not fitting into the 
+        preceding). As an example of non-core features, a noun will have case, 
+        gender and number.
 
-        Note that many words submitted to Morpheus will have several analyses, which may refer to one lemma ('feminae' msy be one of three
-        forms of 'femina') or more than one ('amare' may be the infinitive 'to love' (lemma 'amo') or a vocative adjective 'o bitter man'
-        (lemma 'amarus')).
-
-Supplementing Morpheus Data: 
-        Morpheus does not return two kinds of information which are helpful for analyzing Greek and Latin syntax: cases governed by prepositions;
-        and cases of nominal complements of verbs (i.e. direct and indirect objects). The current approach for Prolog is to use databases 
-        'latin_adjunct.prolog' and 'greek_adjunct.prolog' that provide the additional information. See the examples.prolog file in the /extras directory.
+        Note that many words submitted to Morpheus will have several analyses,
+        which may refer to one lemma ('feminae' msy be one of three forms of 
+        'femina') or more than one ('amare' may be the infinitive 'to love' 
+        (lemma 'amo') or a vocative adjective 'o bitter man'(lemma 'amarus')).
 
 Modififications Made to Morpheus Data:
-        Morpheuslib makes a few changes to Morpheus data in methods of class Analysis. First, the present participle
-        in Latin is missing a voice feature (fixed in fixpart()). Second, Latin (though not Greek) pronouns are missing the person feature (fixed
-        in fixpron()). Third, the supine and infinitive are returned as "moods"  (of noun and verb, respectively). This is fixed in fix_bad_mood()
-        to be in accord with contemporary understanding of their history and function. Each is given its own part of speech; the mood is removed,
-        and the rest of the features are kept.
-
-        Duplicate analyses are sometimes returned. This is dealt with by a uniqueness check. This fix and the checkback add processing time, but keeping the result 
-        set to a minimum is critical for efficient and accurate querying.
+        Morpheuslib makes a few changes to Morpheus data in methods of class 
+        Analysis. First, the present participle in Latin is supplemented with a 
+        voice feature (see fixpart()). Second, Latin pronouns are supplemented
+        with the person feature (see fixpron()). Note: this requires that the
+        pronoun's person be listed in the info.la data file. Third, the supine 
+        and  infinitive are changed from "moods"  (of noun and verb, 
+        respectively) to their own parts of speech (see fix_bad_mood()). This 
+        classification accords better with contemporary understanding of their 
+        history and function. 
 
 Greek URLS:
         Greek words submitted with diacritics return an empty document.
-        E.g. the url http://www.perseus.tufts.edu/hopper/xmlmorph?lang=greek&lookup=mhru%2Fsanto produces:
+        E.g. the url:
+        http://www.perseus.tufts.edu/hopper/xmlmorph?lang=greek&lookup=mhru%2Fsanto 
+        produces:
         <?xml version="1.0" encoding="utf-8"?>
         <analyses>
         </analyses>;
-        whereas http://www.perseus.tufts.edu/hopper/xmlmorph?lang=greek&lookup=mhrusanto produces:
+        whereas 
+        http://www.perseus.tufts.edu/hopper/xmlmorph?lang=greek&lookup=mhrusanto 
+        produces:
         <?xml version="1.0" encoding="utf-8"?>
         <analyses>
 	        <analysis>
@@ -63,13 +77,14 @@ Greek URLS:
                         <feature>unaugmented</feature>
                 </analysis>
         </analyses>.
-        Therefore, Greek words are subitted without breathing or accent diacritics. This causes more matches than necessary to be returned.
-        This is addressed by checking that the returned form matches the submitted form.  
-
-        
+        Therefore, Greek words are subitted without breathing or accent 
+        diacritics. This causes more matches than necessary to be returned.
+        This is addressed by checking that the returned form matches the 
+        submitted form, and retaining only those analyses that match.  
 
 Setup:
-        It is enough to copy the files morpheuslib.py and morpheus.py, along with greek.info and la.info to a single directory. 
+        It is sufficient to copy the files morpheuslib.py and morpheus.py, along 
+        with *.info and cachewords.* files to a single directory. 
         
 
 Python version:
@@ -80,64 +95,93 @@ Usage:  python morpheus.py [-h] [--core CORE] [--json JSON] [--prolog PROLOG]
                            [--log LOG]
                            input {greek,la}
 
-        NOTE: if you have both Python 2 and 3 installed, and "python" refers to v. 2, use "python3" in the command.
+        NOTE: if you have both Python 2 and 3 installed, and "python" refers to 
+        v. 2, use "python3" in the command.
 
         OPTIONAL:
 
-        --core A list of common features to output: form, lemma, pos, dialect, expandedForm, feature. Most useful: lemma and form. If more than one, 
-              in quotes separated by spaces.
+        --core A list of common features to output: form, lemma, pos, dialect, 
+               expandedForm, feature. Most useful: lemma and form. If more than 
+               one, in quotes separated by spaces.
  
-        --json Specify a file for output in JSON. If specificartion starts with '+', append output, otherwise overwrite.
+        --json Specify a file for output in JSON. If specificartion starts with 
+               '+', append output, otherwise overwrite.
 
-        --prolog Specify a file for output in the form of Prolog clauses. If specificartion starts with '+', append output, otherwise overwrite.
+        --prolog Specify a file for output in the form of Prolog clauses. If 
+                 specificartion starts with '+', append output, otherwise 
+                 overwrite.
 
-        --echo If not 'off', print output to terminal in the form requested: Prolog and JSON as above. 'basic' prints a condensed version of the data returned 
-               by Perseus in feature:value pairs for those features that have values.
+        --echo If not 'off', print output to terminal in the form requested: 
+               Prolog and JSON as above. 'basic' prints a condensed version of 
+               the data returned by Perseus in feature:value pairs for those 
+               features that have values.
 
-        --label A label for the text. Competely at the user's discretion, it is not parsed or verified. Intended only to provide a scope for word, clause
-                and sentence locations.
+        --label A label for the text. Competely at the user's discretion, it is 
+                not parsed or verified. Intended only to provide a scope for 
+                word, clause and sentence locations.
 
         --log Specify a file for logging of non- exceptions.
 
-        --start Zero-based ordinal of the word to start proccesing at. Useful if a process terminates on error (e.g. from  an HTTP 503).        
+        --start Zero-based ordinal of the word to start proccesing at. Useful if
+                a process terminates on error (e.g. from  an HTTP 503).        
 
         REQUIRED:
         
-        input A string of words for analysis OR specification of a file containing text. If the string cannot be used to open a file, it is treated as direct
-              input. For more information see TEXT FORMATS below.
+        input A string of words for analysis OR specification of a file 
+              containing text. If the string cannot be used to open a file, it 
+              is treated as input.
 
         lang 'greek' or 'la' as befits.
 
-Grek Text:
-        This program was written against Perseus' dialect of Beta Code, which uses lower case Latin letters. Upper case letters are converted to lower case
-        before submission to Morpheus. Morpheus returns Greek text in cased (for the lemma; uncased for the form) polytonic Greek (composed Unicode).
-        
-Prolog:
-        Output of this program was run on SWI Prolog 5.10.4. (http://www.swi-prolog.org/). There is auseful comparison of Prolog implementations at
-        http://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations. Also, see the file extras/examples.prolog.
+Greek Text:
+        This program was written against Perseus' dialect of Beta Code, which 
+        uses lower case Latin letters. Upper case letters are converted to lower
+        case before submission to Morpheus. 
 
-        NOTE: in SWI Prolog you are likely to see warnings of the form "Warning: .../tacitus.prolog:469: Clauses of pron/10 are not together in the source-file".
-        In some cases, order of Prolog clauses is important. In the case of clauses emittted by morpheuslib, the warning is benign and may be ignored,
+        Morpheus returns Greek text as cased (for the lemma)  or uncased (for the 
+        form) polytonic Greek letters (precomposed Unicode).
+        
+Prolog Output:
+        Output of this program was run on SWI Prolog 5.10.4 (the web site is
+        http://www.swi-prolog.org/). It is generic Prolog and should run on any
+        standard Prolog. There is a useful comparison of Prolog implementations at
+        http://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations. 
 
 JSON (JavaScript Object Notation):
-        This output is suitable for import into MongoDb, a NoSQL database. I haven't used this database,but have entered Greek and Latin JSON records into
-        their online tutorial, and they were accepted and queryable. For more information, http://www.mongodb.org/. 
+        This output is suitable for import into MongoDb, a NoSQL database. I 
+        haven't used this database,but have entered Greek and Latin JSON 
+        records into MongoLab's online tutorial, and they were accepted and 
+        queryable. For more information, http://www.mongodb.org/.
 
 Overview of morpheuslib Classes (brief):
-        Text is tokenized by class morpheuslib.WordStream into a stream of words ending with 0 or 1 separator or terminator characters. WordStream also maintains
-        word location by word, clause, and sentence ordinal, all relative to text beginning, which is zero.
+        Text is tokenized by class morpheuslib.WordStream into a stream of words
+        ending with 0 or 1 separator or terminator characters. WordStream also 
+        maintains word location by word, clause, and sentence ordinal, all 
+        relative to text beginning, which is zero.
 
-        Words are wrapped with location and language in instances of class Word. Instances of MorpheusUrl use Word instances to form the URL string, and
-        then download the analyses XML document from Perseus. This document is wrapped in instance of Analyses, which supplies instances of class 
-        Analysis through Python's iteration mechanism. Each Analysis is convertible into string form for output to file or terminal. 
+        Words are wrapped with location and language in instances of class Word.
+        Instances of MorpheusUrl use Word instances to form the URL string, and
+        then download the analyses XML document from Perseus. This document is 
+        wrapped in instance of Analyses, which supplies instances of class 
+        Analysis through Python's iteration mechanism. Each Analysis is 
+        convertible into string form for output to file or terminal. 
 
 Caching:
-        Class morpheus.Cache implements two caches, volatile (not saved between runs) an persistent (saved). Both caches store Morpheus XML <analyses>
-        as values. The key is the form submitted to the Morpheus (in the case of Greek, "cleansed" Beta Code). Cache.lookup() returns an Analyses object,
+        Class morpheus.Cache implements two caches, volatile (not saved between
+        runs) an persistent (saved). Both caches store Morpheus XML <analyses>
+        as values. The key is the form submitted to the Morpheus (in the case of
+        Greek, "cleansed" Beta Code). Cache.lookup() returns an Analyses object,
         so the fetch by url and cache lookup have the same interface.
 
-        Both caches are implemented with Python dict objects. The persistent one is saved between runs with the Python pickle facility.
+        Both caches are implemented with Python dict objects. The persistent one
+        is saved between runs with the Python pickle facility.
 
-        The contents of the persistent cache are determined by the cachewords files (.la and .greek). The words in them are mostly "function" words which
-        appear often in texts. The user can add or delete words from these files, and the dictionaries will be adjusted to match.
+        The contents of the persistent cache are determined by the cachewords 
+        files (.la and .greek). The words in them are mostly "function" words 
+        which appear often in texts. The user can add or delete words from these
+        files, and the dictionaries will be adjusted to match.
+
+        The volatile cache holds words not added to the persistent cache. It is
+        most likely to be useful with long texts, or texts with a lot of 
+        repetition.
                
