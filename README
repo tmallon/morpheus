@@ -147,11 +147,11 @@ Prolog Output:
         standard Prolog. There is a useful comparison of Prolog implementations at
         http://en.wikipedia.org/wiki/Comparison_of_Prolog_implementations. 
 
-JSON (JavaScript Object Notation):
+JSON (JavaScript Object Notation) Output:
         This output is suitable for import into MongoDb, a NoSQL database. I 
         haven't used this database,but have entered Greek and Latin JSON 
-        records into MongoLab's online tutorial, and they were accepted and 
-        queryable. For more information, http://www.mongodb.org/.
+        records into MongoDb's online tutorial, and they were accepted and 
+        queryable. For more information, http://mongodb.org/.
 
 Overview of morpheuslib Classes (brief):
         Text is tokenized by class morpheuslib.WordStream into a stream of words
@@ -179,7 +179,11 @@ Caching:
         The contents of the persistent cache are determined by the cachewords 
         files (.la and .greek). The words in them are mostly "function" words 
         which appear often in texts. The user can add or delete words from these
-        files, and the dictionaries will be adjusted to match.
+        files, and the dictionaries will be adjusted to match. The persistent
+        cache can be (re)created with the commands:
+        
+        morpheus.py cachewords.la la
+        morpheus.py cachewords.greek greek
 
         The volatile cache holds words not added to the persistent cache. It is
         most likely to be useful with long texts, or texts with a lot of 
