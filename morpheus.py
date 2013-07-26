@@ -457,8 +457,13 @@ ws.close()
 print(ca.status_str('pers'))
 print(ca.status_str('vola'))      
 ca.save()
-print("morpheus.py done. Text counts:")
-print(str(ws.i - st) + " word(s) analyzed in")
-print(str(ws.c) + " clauses;")
-print(str(ws.s) + " sentences.")
-print(str(retained_ct) + ' analyses retained out of ' + str(returned_ct) + " analyses returned.")
+print("morpheus.py done.")
+if ws.i - st <= 0:
+    print("--start was set beyond the end of input (" + str(ws.i - 1) + ").")
+else:    
+    print("Text counts:")
+    print(str(ws.i - st) + " word(s) analyzed in")
+    print(str(ws.c) + " clauses;")
+    print(str(ws.s) + " sentences.")
+    print(str(retained_ct) + ' analyses retained out of ' + str(returned_ct) + " analyses returned.")
+
