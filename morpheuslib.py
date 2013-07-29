@@ -353,11 +353,15 @@ class Analysis:
                     
     def value(self, feature):
         """ Return the feature's value, e.g. 'noun' for 'pos'. """
-        if self.elem.find(feature) is None:
-            print(feature + ' not found.')
-            return None
+        if feature == 'lang':
+            return self.ret_lang()
         else:
-            return self.elem.find(feature).text
+
+            if self.elem.find(feature) is None:
+                return feature + ' not found.'
+            
+            else:
+                return self.elem.find(feature).text
 
     
 
@@ -443,8 +447,8 @@ class Analysis:
     
     def select_core (self, some):
         """Select a subset of the core features for output.  """
-        return [safe_text(x.text) for x in self.elem if x.tag in isect(Analysis.core_features,  some)]
-
+##        return [safe_text(x.text) for x in self.elem if x.tag in isect(Analysis.core_features,  some)]
+        return [safe_text(self.value(f)) for f in some if f in Analysis.core_features]
 
     def noncore(self):
         """None-core feaures are those that vary by part of speech. They are output in feature name order. """
