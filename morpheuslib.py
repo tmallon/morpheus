@@ -19,22 +19,24 @@ def read_dict(f):
     return d
         
 
-def safe_text (s):
-        """Return s quoted for Prolog. """
-        if s is None:
-            
-            return 'nothing'.center(9, "'")
-        else:
-            return s.center(len(s) + 2, "'")
 
+        
+def _str(x, none, quote = None):
+    if x == None:
+        s = none
+        
+    elif type(x) == type("hi"):
+        s = x
+    else:
+        return str(x)
+    if quote == None:
+        return s
+    else:
+        return s.center(len(s) + 2 * len(quote), quote)
+    
 def uncap(s):
     return s[0].lower() + s[1:] 
 
-def isect(l1, l2):
-    return [x for x in l1 if x in l2]
-
-def comp(l1, l2):
-    return [x for x in l1 if x not in l2]
 
 class WordStream:
     """Reads words from a text file or string, keeping track of word, clause, and sentence position.
@@ -91,7 +93,8 @@ class WordStream:
             self.abbr_term = ''
         else:
             self.abbr_term = ls[2]
-        self.abbrs = ls[3:]    
+        self.alpha = ls[3]    
+        self.abbrs = ls[4:]    
         
         
     def count (self):
@@ -128,8 +131,11 @@ class WordStream:
                 return self.conv_acc()
                 
             else:
-                self.acc.write(c)
-                self.bct = self.bct + 1
+                if c in self.alpha:
+                    self.acc.write(c)
+                    self.bct = self.bct + 1
+                else:
+                    pass
                     
             
     def conv_acc(self):
@@ -137,7 +143,8 @@ class WordStream:
         s = self.acc.getvalue().rstrip()
         self.acc = io.StringIO(' ' * 20)
         self.bct = 0
-        s = s.strip("’" + '‘')
+        #s = s.strip("’" + '‘')
+        
         t = s[-1]
         u = s.rstrip(self.seps + self.terms)
         if self.lang == 'greek':
@@ -159,6 +166,8 @@ class WordStream:
 
 class Word:
     """One word, with its label, language and position information. """
+    features = ['label', 'w', 'c', 's']
+    
     def __init__ (self, label, word, lang, w, c, s):
         """ """
         self.label = label
@@ -172,6 +181,9 @@ class Word:
         """Return the word's position information in a comma separated string. """
         return ','.join([self.label.center(len(self.label) + 2, "'"), str(self.w), str(self.c), str(self.s)])
 
+    def values(self):
+        return [self.label, self.w, self.c, self.s]
+    
     def __str__(self):
         return self.word + ' (' + self.lang +') word no. ' + str(self.w) + ' in ' + self.label.center(len(self.label) + 2, "'") 
 
@@ -330,7 +342,18 @@ class Analysis:
         self.fix_pron()
         self.fix_part()
 
-        
+    def _all_features(self):
+        l = [x.tag for x in self.elem]
+        l.append('lang')
+        return l 
+
+    def export(self, some):
+        cf = [f for f in some if f in Analysis.core_features]
+        cv = [self.value(f) for f in cf]
+        ncf = [f for f in self._all_features() if f not in Analysis.core_features]
+        ncf.sort()
+        ncv = [self.value(f) for f in ncf]
+        return (cf, cv, ncf, ncv)
         
     def __str__(self):
         return ' '.join([t.tag + ':' + t.text for t in self.elem if t.text != None])
@@ -445,31 +468,19 @@ class Analysis:
             pass 
      	    
     
-    def select_core (self, some):
-        """Select a subset of the core features for output.  """
-##        return [safe_text(x.text) for x in self.elem if x.tag in isect(Analysis.core_features,  some)]
-        return [safe_text(self.value(f)) for f in some if f in Analysis.core_features]
-
-    def noncore(self):
-        """None-core feaures are those that vary by part of speech. They are output in feature name order. """
-        return [safe_text(y.text) for y in sorted([x for x in self.elem if x.tag not in Analysis.core_features], key = lambda el: el.tag)]
+    
 
 
     def dict(self, some):
         """ A dictionary of all word information, and tag, text pairs for features in list 'some', for JSON. """
         d = {}
-        d['label'] = self.word.label
-        d['w'] = self.word.w
-        d['c'] = self.word.c
-        d['s'] = self.word.s
-        d['pos'] = self.pos()
+
+        q = self.export(some)
+        f = Word.features + q[0] + q[2]
+        v = self.word.values() + q[1] + q[3]
+        for i in range(0, len(f)):
+            d[f[i]] = v[i]
         
-        co = [(y.tag, y.text) for y in self.elem if y.tag in isect(Analysis.core_features, some)]
-        for (a, e) in co:
-            d[a] = e
-        nc = [(y.tag, y.text) for y in self.elem if y.tag not in Analysis.core_features]
-        for (a, e) in nc:
-            d[a] = e
         return d
 
     
@@ -517,20 +528,39 @@ class Analysis:
     def prolog (self, some):
         """Return  a Prolog fact clause from the analysis, limiting the core
            features to the names in the list argument 'some'. """
-        if len(self.noncore()) == 0:
-            return self.pos() + '(' + self.word.loc_str() + ',' + ','.join(self.select_core(some)) + ').'
-        else:
-            return self.pos() + '(' + self.word.loc_str() + ',' + ','.join(self.select_core(some)) + ',' + ','.join(self.noncore()) + ').'
+        return self.prolog2(some)
+##        if len(self.noncore()) == 0:
+##            return self.pos() + '(' + self.word.loc_str() + ',' + ','.join(self.select_core(some)) + ').'
+##        else:
+##            return self.pos() + '(' + self.word.loc_str() + ',' + ','.join(self.select_core(some)) + ',' + ','.join(self.noncore()) + ').'
+##        
+        
+    def prolog2(self, some):
+        q = self.export(some)
+        v = self.word.values() + q[1] + q[3]
+        vs = [_str(x, 'nothing', "'") for x in v]
+        return self.pos() + '(' + ','.join(vs) + ').'
         
     def arity(self, some):
         """ Return the arity of the eventual Prolog fact. """
         # Value is 4 location terms + number of core terms in some + number of
         # non-core terms.
-        return 4 + len(some) + len(self.noncore())
+        # return 4 + len(some) + len(self.noncore())
+        q = self.export(some)
+        return len(Word.features) + len(q[0]) + len(q[2])
 
     def prolog_proc_name(self, some):
         """ Return the Prolog procedure name: functor and arity separated by /."""
         return self.pos() + '/' + str(self.arity(some))
+
+    def oz(self, some):
+        q = self.export(some)
+        f = Word.features + q[0] + q[2]
+        
+        v = self.word.values() + q[1] + q[3]
+        vs = [_str(x, 'nil') for x in v]
+        return '|'.join([self.pos(), ':'.join(f), ':'.join(vs)])
+    
     
 class Unique:
     """ A class to test whether an object has been found already."""
