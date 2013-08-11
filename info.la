@@ -1,11 +1,13 @@
-#First three lines are:
+#First four lines are:
 #clause separators
 #sentence terminators
 #abbreviation terminator
+#alphabet (letters plus diacritics)
 #To skip any use NONE.
 ,;:
 .?
 .
+abcdefghijklmnopqrstuvxyzABCDEFGHIJKLMNOPQRSTUVXYZ
 # This file contains Latin abbreviations ending with period found in texts and grammatically unlikely to appear at sentence end.
 # For now, praenomina.
 # Masculine:
