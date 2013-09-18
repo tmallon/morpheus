@@ -920,7 +920,7 @@ class Analysis:
         f = q[0] + q[2] + q[4]
         
         v = q[1] + q[3] + q[5]
-        vs = [_str(x, 'nil') for x in v]
+        vs = [_str(x, 'nil', "'") for x in v]
         return '|'.join(['analysis', ':'.join(f), ':'.join(vs)])
     
     
