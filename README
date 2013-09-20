@@ -1,7 +1,6 @@
 morpheus and morpheuslib README
 
-Version:
-        0.5 dated 24 July 2013
+Dated 19 September 2013
 
 Status:
         Still in testing. Produces correct output, but produces rather verbose
@@ -88,22 +87,33 @@ Setup:
         
 
 Python version:
-        The program was written against Python 3.3.0.
+        The program was written in Python 3.3.0.
          										
-Usage:  python morpheus.py [-h] [--core CORE] [--json JSON] [--prolog PROLOG]
-                           [--echo {basic,off,prolog,json}] [--label LABEL]
-                           [--log LOG]
-                           input {greek,la}
+Usage:  morpheus.py [-h] [--core CORE] [--word WORD] [--json JSON]
+                   [--prolog PROLOG] [--oz OZ]
+                   [--echo {basic,off,prolog,json,oz}] [--label LABEL]
+                   [--log LOG] [--start START]
+                   input {greek,la}
+
 
         NOTE: if you have both Python 2 and 3 installed, and "python" refers to 
         v. 2, use "python3" in the command.
 
         OPTIONAL:
 
-        --core A list of common features to output: form, lemma, pos, dialect, 
+        --core A list of core features to output: form, lemma, pos, dialect, 
                expandedForm, feature. Most useful: lemma and form. If more than 
-               one, in quotes separated by spaces.
- 
+               one, in quotes, separated by spaces.
+
+        --word A list ot text (or word features to export: label, w, c, s.
+               "label" is the text label supplied as a scope for the word
+               location ordinals, supplied in the optional --label argument.
+               "w", "c", and "s" are the zero based ordinals of the word,
+               the clause containing the word, and the sentence containing the
+               word, respectively.
+
+               If more than one, in quotes, separated by spaces.
+
         --json Specify a file for output in JSON. If specificartion starts with 
                '+', append output, otherwise overwrite.
 
@@ -111,8 +121,12 @@ Usage:  python morpheus.py [-h] [--core CORE] [--json JSON] [--prolog PROLOG]
                  specificartion starts with '+', append output, otherwise 
                  overwrite.
 
+        --oz    Specify a file for Oz record output. If 
+                specificartion starts with '+', append output, otherwise 
+                overwrite. 
+
         --echo If not 'off', print output to terminal in the form requested: 
-               Prolog and JSON as above. 'basic' prints a condensed version of 
+               Prolog, JSON, or Oz as above. 'basic' prints a condensed version of 
                the data returned by Perseus in feature:value pairs for those 
                features that have values.
 
@@ -133,6 +147,21 @@ Usage:  python morpheus.py [-h] [--core CORE] [--json JSON] [--prolog PROLOG]
 
         lang 'greek' or 'la' as befits.
 
+Use cases:
+        Some recommended commands for typical usages:
+        for cache generation: 
+            morpheus.py cachewords.la la OR morpheus.py cachewords.greek greek
+
+        for a text database: 
+            prolog: morpheus.py --core "form lemma" --word "label w c s" --prolog PROLOG --label LABEL text {greek,la}
+            JSON: morpheus.py --core "form lemma pos" --word "label w c s" --json JSON --label LABEL text {greek,la}
+            Oz: morpheus.py --core "form lemma pos" --word "label w c s" --oz OZ --label LABEL text {greek,la}
+
+        for raw morphology data:
+            prolog: morpheus.py --core "form lemma lang" --prolog PROLOG wordlist {greek,la}
+            JSON: morpheus.py --core "form lemma lang pos" --json JSON wordlist {greek,la}
+            Oz: morpheus.py --core "form lemma lang pos" --oz OZ wordlist {greek,la}
+        
 Greek Text:
         This program was written against Perseus' dialect of Beta Code, which 
         uses lower case Latin letters. Upper case letters are converted to lower
@@ -153,18 +182,39 @@ JSON (JavaScript Object Notation) Output:
         records into MongoDb's online tutorial, and they were accepted and 
         queryable. For more information, http://mongodb.org/.
 
+Oz Output:
+        Output records are designed for conversion into Oz (Mozart 1.4)
+        language records. The format is analysis|names|values, where names is a
+        colon-separated list of feature names, values is a colon separated list 
+        of single-quoted feature values, each of which is converted to an Oz 
+        atom. 
+
+        Mozart 1.4 does not handle UTF-8 encoded strings, however my tests have
+        shown that UTF-8 byte arrays are converted to atoms without exception 
+        and the resulting atoms can be tested for equality. characters with code
+        points greater than 255 are displayed as ?, and are not correctly con-
+        verted to strings. I assume equa;ity testing works because the test uses
+        a low-level, character-agnostic method.
+
+        Mozart 2 will support Unicode encodings, so I have left Greek text as-is
+        in Oz output strings.
+
 Overview of morpheuslib Classes (brief):
+        In quasi-functional notation the process frm text to output is:
+
+        text (string) -> [morpheuslib.Word] -> [[morpheuslib.Analysis]]->[datum]
+        
         Text is tokenized by class morpheuslib.WordStream into a stream of words
         ending with 0 or 1 separator or terminator characters. WordStream also 
         maintains word location by word, clause, and sentence ordinal, all 
         relative to text beginning, which is zero.
 
         Words are wrapped with location and language in instances of class Word.
-        Instances of MorpheusUrl use Word instances to form the URL string, and
-        then download the analyses XML document from Perseus. This document is 
-        wrapped in instance of Analyses, which supplies instances of class 
-        Analysis through Python's iteration mechanism. Each Analysis is 
-        convertible into string form for output to file or terminal. 
+        Instances of morpheuslib.MorpheusUrl use Word instances to form the URL 
+        string, and then download the analyses XML document from Perseus. This 
+        document is wrapped in instance of morpheuslib.Analyses, which supplies 
+        instances of class Analysis through Python's iteration mechanism. Each 
+        Analysis is convertible into string form for output to file or terminal. 
 
 Caching:
         Class morpheus.Cache implements two caches, volatile (not saved between
