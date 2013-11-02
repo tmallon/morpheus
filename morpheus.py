@@ -195,8 +195,9 @@ class Commenter:
             self.prolog_file.write("%% core features: " + str(core_fs) + '\n')
             self.prolog_file.write("%% word features: " + str(word_fs) + '\n')
             self.prolog_file.write("%%\n")
-            self.prolog_file.write("%% Paste :- dynamic directives (uncommented) over this comment.\n%%\n")
-            
+            self.prolog_file.write("%% Paste :- dynamic directives (uncommented) below this comment.\n\n")
+            self.prolog_file.write("%% Insert consults of rule files below this comment.\n\n")
+            self.prolog_file.write("%%\n")
         if self.json_file is None:
             pass
         else:
@@ -243,6 +244,7 @@ class Commenter:
         if self.prolog_file is None:
             pass
         else:
+            self.prolog_file.write("\n%% Insert consults of prune files below this comment.\n")
             self.prolog_file.write("\n%%\n")
             self.prolog_file.write("%% Names of Prolog procedures generated follow.\n")
             [self.prolog_file.write("%% " + n + '\n') for n in self.uq.set]
@@ -577,6 +579,7 @@ def main():
         
     retained_ct = 0    
     returned_ct = 0
+    zero_ct = 0
     dt = datetime.datetime.now()
     log(dt, file3, ' '.join(sys.argv))
     com = Commenter(file2, file1, file4)
@@ -604,6 +607,7 @@ def main():
                     ans = u.fetch()
                     ca.cache(ans)
                     print("Cached " + str(w) + ' ' + ca.cache_add)
+                    
                 except (urllib.error.HTTPError, urllib.error.URLError ) as err:
                     print("Error contacting Perseus: {0}".format(err))
                     log(w, file3, 'Run stopped on error ' + format(err))
@@ -613,14 +617,15 @@ def main():
                     log(w, file3, 'Run stopped on error ' + format(err))
                     break
             
-            ans_ct = ans.count()
             
+            ans_ct = ans.count()
             if ans_ct == 0:
                 print("NO ANALYSES RETURNED.")
+                zero_ct = zero_ct + 1
                 log(w, file3, ' No analyses returned.')
             else:
                 print(str(ans_ct) + " analyses returned.")
-        
+                
                 
                 returned_ct += ans_ct
                 for an in ans:
@@ -640,6 +645,7 @@ def main():
                    
                 if ans.retct == 0:
                     print("NO ANALYSES RETAINED.")
+                    zero_ct = zero_ct + 1
                     log(w, file3, ' No analyses retained.')
                     [log(x.dud_str(), file3, '? (not retained)')
                      for x in ans.non_ret]
@@ -682,6 +688,9 @@ def main():
         print(str(ws.c) + " clauses;")
         print(str(ws.s) + " sentences.")
         print(str(retained_ct) + ' analyses retained out of ' + str(returned_ct) + " analyses returned.")
-
+        if zero_ct > 0:
+            print(str(zero_ct) + " words did not yield output. See run output or log.")
+        else:
+            pass
 if __name__ == '__main__':
     main()
