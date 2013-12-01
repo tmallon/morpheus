@@ -12,8 +12,8 @@ import io
 import unicodedata
 
 def read_dict(f):
-    """ Read a file of lines with key value pairs separated by whitespace into a
-    dictionary.
+    """ Read a file of lines with key value pairs separated by whitespace into
+        a dictionary.
     Args:
         f: The path and name of the file..
     Returns:
@@ -51,14 +51,13 @@ def _str(x, none, quote = None):
     Raises:
         None.
     """
-    if x == None:
+    if x is None:
         s = none
-        
-    elif type(x) == type("hi"):
+    elif isinstance(x, str):
         s = x
     else:
         return str(x)
-    if quote == None:
+    if quote is None:
         return s
     else:
         return s.center(len(s) + 2 * len(quote), quote)
@@ -85,9 +84,10 @@ class WordStream:
 
     Attributes:
         i: ordinal of next word read word ordinal (integer zero-based)
-        c: ordinal of the clause whose words are being read (integer zero based)
+        c: ordinal of the clause whose words are being read (integer zero 
+           based)
         s: ordinal of the sentence whose words are being read (integer zero
-            based)
+           based)
         text: a TextIO object
     
         lang: 'greek' or 'la'
@@ -292,6 +292,8 @@ class Word:
         return (self.word + ' (' + self.lang +') word no. ' + str(self.w) +
                 ' in ' + self.label.center(len(self.label) + 2, "'") )
 
+
+       
 class MorpheusUrl:
     """A word's URL at Perseus.
     Attributes:
@@ -446,7 +448,8 @@ class Converter:
             
 class Analyses:
     """ A wrapper for the <analyses> XML document returned by Perseus.
-        The wrapper supports iterating over the <analysis> elements it contains.
+        The wrapper supports iterating over the <analysis> elements it 
+        contains.
     Attributes:
         text: (string) the <analyses> XML document
         root: (ElementTree) the tree parsed from text
@@ -586,7 +589,7 @@ class Analysis:
         
     def __str__(self):
         return ' '.join([t.tag + ':' + t.text for t in self.elem
-                         if t.text != None])
+                         if t.text is not None])
 
     def noncore_features(self):
         """
@@ -792,23 +795,25 @@ class Analysis:
     
 
 
-    def dict(self, q):
+    def dict(self, q, core_only = False):
         """ Computes a dict of feature value pairs for use in computing JSON
             output.
             
-        Args:
-            q: the export sextuple
-            core_fs: a list of core features (string) to export
-            word_fs: a list of word features (string) to export.
+        Arg:
+            q: the export sextuple.
+            core_only: Booolean indicating whether to export only core features.
         Returns:
             a dictionary of all word information, and tag, text pairs for
             features in arguments.
         """
         d = {}
 
-        
-        f = q[0] + q[2] + q[4]
-        v = q[1] + q[3] + q[5]
+        if core_only:
+            f = q[0] + q[4]
+            v = q[1] + q[5]
+        else:
+            f = q[0] + q[2] + q[4]
+            v = q[1] + q[3] + q[5]
         for i in range(0, len(f)):
             d[f[i]] = v[i]
         
@@ -816,17 +821,18 @@ class Analysis:
 
     
     
-    def json(self, q):
+    def json(self, q, core_only = False):
         """ Return JSON string. for features in list 'some' Features are in no
             guaranteed order.
-        Args:
-            core_fs: a list of core features (string) to export
-            word_fs: a list of word features (string) to export.
+        Arg:
+            q: the export sextuple (see method export()).
+            core_only: a boolean indicating whether to export only core features.
+                Default is False.
         Returns:
-            he analysis asa JSON string.
+            the analysis as a JSON string.
 
         """
-        return json.dumps(self.dict(q),ensure_ascii = False)
+        return json.dumps(self.dict(q, core_only),ensure_ascii = False)
 
     
     def backcheck(self):
@@ -874,13 +880,31 @@ class Analysis:
     
 
         
-    def prolog(self, q):
-        """ The exported analysis converted into a Prolog fact string."""
-        v = q[1] + q[3] + q[5]
+    def prolog(self, q, core_only = False):
+        """The exported analysis converted into a Prolog fact string but without
+        non-core features.
+        Note: the Prolog functor is 'word' for core-only facts.
+        Args: 
+            q: the export sextuple
+            core_only: a boolean indicating whether to export only core features.
+                Default is False.
+        Returns:
+            a string representing the Prolog fact.
+        """
+        if core_only:
+            v = q[1] + q[5]
+            func = 'word'
+        else:
+
+            v = q[1] + q[3] + q[5]
+            func = self.pos()
+
         vs = [_str(x, 'nothing', "'") for x in v]
-        return self.pos() + '(' + ','.join(vs) + ').'
-        
-    def arity(self, core_fs, word_fs):
+        return func + '(' + ','.join(vs) + ').'
+
+    
+    
+    def arity(self, core_fs, word_fs, core_only = False):
         """ Computes the arity of the Prolog fact specified by the arguments.
 
         Args:
@@ -890,11 +914,13 @@ class Analysis:
             integer.
 
         """
-        
-        return len(core_fs) + len(word_fs) + len(self.noncore_features())
+        if core_only:
+            return len(core_fs) + len(word_fs)
+        else:
+            return len(core_fs) + len(word_fs) + len(self.noncore_features())
        
 
-    def prolog_proc_name(self, core_fs, word_fs):
+    def prolog_proc_name(self, core_fs, word_fs, core_only = False):
         """ Compute the Prolog procedure name: functor and arity separated by /.
             E.g. 'verb/11'.
 
@@ -905,9 +931,9 @@ class Analysis:
             string.
 
         """
-        return self.pos() + '/' + str(self.arity(core_fs, word_fs))
+        return self.pos() + '/' + str(self.arity(core_fs, word_fs, core_only))
 
-    def oz(self, q):
+    def oz(self, q, core_only = False):
         """ Compute a string for conversion to an Oz language record.
 
         Args:
@@ -916,10 +942,12 @@ class Analysis:
         Returns:
             string.
         """    
-
-        f = q[0] + q[2] + q[4]
-        
-        v = q[1] + q[3] + q[5]
+        if core_only:
+            f = q[0] + q[4]
+            v = q[1] + q[5]
+        else:
+            f = q[0] + q[2] + q[4]
+            v = q[1] + q[3] + q[5]
         vs = [_str(x, 'nil', "'") for x in v]
         return '|'.join(['analysis', ':'.join(f), ':'.join(vs)])
     
