@@ -283,4 +283,12 @@ VI. Programming Notes
         The volatile cache holds words not added to the persistent cache. It is
         most likely to be useful with long texts, or texts with a lot of 
         repetition.
-               
+
+3. Motivation
+        My original motivation for writing this program was to create a more
+        computationally useful form for morphological analysis data than XML.
+        Prolog facts seemed to be a promising choice for that form.
+
+4. Future directions
+        1. Adding support for text that mixes Greek and Latin words.
+       
