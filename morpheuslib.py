@@ -11,6 +11,26 @@ from xml.etree import ElementTree
 import io
 import unicodedata
 
+def configure2():
+    """ Configure library classes that are not language specific.
+        Returns:
+            no return value.
+        Effect:
+            sets url for Morpheus service.
+    """
+    h = None
+    try:
+        h = open('morpheuslib.conf', 'r')
+        ls = [l.rstrip() for l in h.readlines() if len(l) > 0 and l[0] != '#']
+        MorpheusUrl.set_base(ls[0])
+        
+    except:
+        MorpheusUrl.set_base('http://www.perseus.tufts.edu/hopper/')
+
+    if h is not None:
+        h.close()
+    
+
 def read_dict(f):
     """ Read a file of lines with key value pairs separated by whitespace into
         a dictionary.
@@ -295,13 +315,17 @@ class Word:
 
        
 class MorpheusUrl:
-    """A word's URL at Perseus.
+    """A word's Morpheus service URL.
     Attributes:
         url: the Perseus url string
         word: (morpheuslib.Word) the word being looked up.
     """
+    @classmethod
+    def set_base(cls, base):
+        cls.base = base
+
     def __init__ (self, word):
-        """
+        """ Translate the word into a URL for lookup.
         Args:
             word (morpheuslib.Word): the word to look up.
         """
@@ -310,11 +334,12 @@ class MorpheusUrl:
             w = BetaCode.cleanse(word.word)
         else:
             w = word.word
-        self.url = "http://www.perseus.tufts.edu/hopper/xmlmorph?lang=" + word.lang + "&lookup=" + w
+        #self.url = "http://www.perseus.tufts.edu/hopper/xmlmorph?lang=" + word.lang + "&lookup=" + w
+        self.url = MorpheusUrl.base + "xmlmorph?lang=" + word.lang + "&lookup=" + w
         self.word = word
         
     def fetch (self):
-        """Fetch the <analyses> xml document.
+        """ Fetch the <analyses> xml document.
         Returns:
             The Analyses object that wraps the document.
         Raises:
@@ -453,16 +478,16 @@ class Analyses:
     Attributes:
         text: (string) the <analyses> XML document
         root: (ElementTree) the tree parsed from text
-        i:
-        els:
-        retct:
+        i: iteration count, used to trigger StopIteration
+        els: the list of analysis elements
+        retct: the count of retained analyses
         uq: morpheuslib.Unique to ensure uniqueness
-        non_ret:
+        non_ret: list of analyses that were not retained.
         
         
     """
     def __init__ (self, text, word):
-        """
+        """ Set the raw document text and word whose analysis set it is.
         Args:
             text (string): the <analyses> document.
             word (Word): the word analysed.
@@ -502,7 +527,7 @@ class Analyses:
             return False
         
     def __next__(self):
-        """
+        """ Iteration method for the analysis elements.
         Returns:
             the next <analysis> element converted into an Analysis object.
         """  
@@ -592,9 +617,9 @@ class Analysis:
                          if t.text is not None])
 
     def noncore_features(self):
-        """
+        """ 
         Returns:
-            those features specific to the part of speech (list of strings).
+            names of those features specific to the part of speech (list of strings).
         """
         return [x.tag for x in self.elem if x.tag not in Analysis.core_features]
     

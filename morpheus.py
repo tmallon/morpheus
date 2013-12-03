@@ -572,11 +572,14 @@ def main():
 
     try:
         file4 = output2(args.oz)
-        print("Oz language recrd output to " + file4.__str__())
+        print("Oz language record output to " + file4.__str__())
     except IOError as err:
         print(err)
         exit()
-        
+    
+    morpheuslib.configure2()
+    print("Using Morpheus service at " + morpheuslib.MorpheusUrl.base)
+    
     retained_ct = 0    
     returned_ct = 0
     zero_ct = 0
