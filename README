@@ -197,7 +197,8 @@ III. Usage
         lang 'greek' or 'la' as befits.
 
 4. Use cases
-        Some recommended commands for typical usages:
+        Some recommended commands for typical uses:
+
         for cache generation: 
             morpheus.py cachewords.la la OR morpheus.py cachewords.greek greek
 
@@ -210,6 +211,9 @@ III. Usage
             prolog: morpheus.py --core "form lemma lang" --prolog PROLOG wordlist {greek,la}
             JSON: morpheus.py --core "form lemma lang pos" --json JSON wordlist {greek,la}
             Oz: morpheus.py --core "form lemma lang pos" --oz OZ wordlist {greek,la}
+
+        for morphology lookup (prints feature:value pairs):
+            morpheus.py --echo basic word {greek, la}
         
 V. Outputs
 
