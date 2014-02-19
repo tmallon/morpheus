@@ -513,10 +513,12 @@ def main():
     if args.core is None:
         c = morpheuslib.Analysis.core_features
     else:
-        c = set(args.core.split())
-        if not (c.issubset(morpheuslib.Analysis.core_features)):
+        #c = set(args.core.split())
+        c = args.core.split()
+        cset = set(c) 
+        if not (cset.issubset(morpheuslib.Analysis.core_features)):
             print("Unrecognized core features supplied: "
-                  + str(c.difference(morpheuslib.Analysis.core_features)))
+                  + str(cset.difference(morpheuslib.Analysis.core_features)))
             exit()
         else:
             pass
@@ -524,10 +526,11 @@ def main():
     if args.word is None:
         wfs = []
     else:
-        wfs = set(args.word.split())
-        if not (set(wfs).issubset(morpheuslib.Word.features)):
+        wfs = args.word.split()
+        wset = set(wfs)
+        if not (wset.issubset(morpheuslib.Word.features)):
             print("Unrecognized word features supplied: "
-                  + str(wfs.difference(morpheuslib.Word.features)))
+                  + str(wset.difference(morpheuslib.Word.features)))
             exit()
         else:
             pass
