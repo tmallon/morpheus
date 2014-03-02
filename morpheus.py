@@ -195,8 +195,8 @@ class Commenter:
             self.prolog_file.write("%% core features: " + str(core_fs) + '\n')
             self.prolog_file.write("%% word features: " + str(word_fs) + '\n')
             self.prolog_file.write("%%\n")
-            self.prolog_file.write("%% Paste :- dynamic directives (uncommented) below this comment.\n\n")
-            self.prolog_file.write("%% Insert consults of rule files below this comment.\n\n")
+            self.prolog_file.write("%% Paste :-dynamic directives (uncommented) below this comment.\n\n")
+            self.prolog_file.write("%% Insert consults of adjunct and rule files below this comment.\n\n")
             self.prolog_file.write("%%\n")
         if self.json_file is None:
             pass
@@ -252,7 +252,7 @@ class Commenter:
             self.prolog_file.write("%% assert and retract with it, copy the appropriate\n")
             self.prolog_file.write("%% :-dynamic directive from this comment to before the first clause\n")
             self.prolog_file.write("%% in this file.\n")
-            [self.prolog_file.write("%% :- dynamic " + n + '.\n') for n in self.uq.set]
+            [self.prolog_file.write("%% :-dynamic " + n +  '.\n') for n in self.uq.set]
             self.prolog_file.write("%%\n")
             
 class Cache:
