@@ -80,6 +80,16 @@ def num_sfx(s):
     
     return (s[:i + 1], s[i + 1:])
 
+def special_str(x, none):
+    """A string meeting lexical requirements of Oz and Prolog."""
+    if x is None:
+        x = none
+
+    if isinstance(x, str):
+        return x.center(len(x) + 2 , "'")
+
+    return str(x)
+
 #Replace with ValueError?
 class LangError(ValueError):
     """An exception for unrecognized language options.
@@ -674,6 +684,26 @@ class Word(object):
         else:
             raise LangError("Illegal lang " + self.lang)
 
+    def for_form_comp(self):
+        """A version of the word for comparison wuth the form returned by
+        Morpheus
+        Returns:
+            str.
+        Raises:
+            LangError.
+        """
+        if self.lang == 'la':
+            return self.word.lower()
+        elif self.lang == 'greek':
+            if self.greek_mode == 'unicode':
+                return self.word.lower()
+            elif self.greek_mode == 'betacode':
+                return BetaCode.to_unicode(self.word).lower()
+            else:
+                raise LangError("Invalid greek_mode " + self.lang)
+        else:
+            raise LangError("Invalid lang " + self.lang)
+
     def make_url(self):
         """ Convenience method to create a url for Morpheus service.
         Returns:
@@ -817,6 +847,9 @@ class Analysis:
         word: (Word) the analysed word.
         
     """
+    # Core features are those not specific to a part of speech.
+    core_features = ['form', 'lemma', 'expandedForm', 'pos', 'lang','dialect', 'feature', 'lemma_sfx']
+
     def __init__ (self, elem, word):
         """
         Initializes the analysis element and word, and fixes the analysis.
@@ -840,6 +873,8 @@ class Analysis:
         """
         if feature == 'lang':
             return self.elem.find('form').attrib.get('lang')
+        elif feature in Word.features:
+            return getattr(self.word, feature)
         else:
             e = self.elem.find(feature)
             if e is None:
@@ -927,7 +962,20 @@ class Analysis:
         for fix in fixes:
             getattr(self, 'fix_' + fix)()
             
-     
+    def inflectional_features(self):
+        """Infections of the analysed word  
+        Returns:
+            names of those features specific to the part of speech (list of strings).
+        """
+        return sorted([x.tag for x in self.elem if x.tag not in Analysis.core_features])
+
+    def to_xml(self):
+        """The XML text for this analysis. Not identical to the original, if
+        fixes were applied.
+        Returns:
+            bytes.
+        """
+        return ElementTree.tostring(self.elem, encoding = "utf-8", method= "xml")    
 
 class AnalysisList:
     """ Provides multiple-pass processing of analyses.
@@ -1008,7 +1056,6 @@ class Cache:
             an Instance of MorpheusResponse such as would have been returned by
             Morpheus service; or None if the word is not found.
         """ 
-        
         return self.pers.get((word.for_url(), word.lang))
 
     def save(self):
@@ -1056,3 +1103,72 @@ class Cache:
         directory.
         """
         return cls('morpheuslib2.cache')
+
+class Exporter(object):
+    def __init__(self, *features, inflectional = True):
+        """
+        Args:
+            features : names of core_features to export. If infleional is false,
+                include inflectional features here also.
+            inflectional: if True (default) all inflectional exported in order
+                by feature name; if False, only inflectional features in *features
+                are exported.
+        """
+        self.features = list(features)
+        self.inflectional = inflectional
+        self.vals = []
+        self.keys = []
+    
+    def __iter__(self):
+        return self.keys.__iter__()
+
+    def __getitem__(self, key):
+        try:
+            i = self.keys.index(key)
+            return self.vals[i]
+        except ValueError:
+            raise KeyError(key)
+
+    def set_analysis(self, analysis):
+        """Extract the features for export from the argument.
+        Arg:
+            analysis: instance of Analysis.
+        Raises:
+            ValueError if a feature is not found among analysis's features.
+        """
+        self.keys = self.features
+        if self.inflectional:
+            self.keys = self.keys + analysis.inflectional_features()
+        self.vals = [analysis.get_feature(k) for k in self.keys]
+         
+    def json(self):
+        """Export the analysis as JSON key:value pairs.
+        Returns:
+            str. If exporter was not initialized with an analysis, returns the 
+            string 'null'
+        """
+       
+        return json.dumps(dict(zip(self.keys, self.vals)), ensure_ascii = False)
+
+    def prolog(self, functor = 'pos'):
+        """A Prolog fact from this analysis."
+        
+        Default is to use the pos as a functor. Be sure to include 'pos' in the
+        features argument of the Exporter constructor if you want this as the
+        functor. Any functor arg that can't be found as a key will be used as 
+        the functor.
+        """
+        func = None
+        try:
+            func   = self[functor]
+        except KeyError:
+            func = functor
+
+        vx = [special_str(v, 'none') for v in self.vals]
+        return func + '(' + ','.join(vx) + ')'
+
+    def oz(self):
+        """A form for importing as Oz language records."""
+        
+        vx = [special_str(v, 'none') for v in self.vals]
+        return '|'.join(['analysis', ':'.join(self.keys), ':'.join(vx)])
